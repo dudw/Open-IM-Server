@@ -48,18 +48,20 @@ endif
 
 # TOOLS_DIR: The directory where tools are stored for build and testing.
 ifeq ($(origin TOOLS_DIR),undefined)
-TOOLS_DIR := $(ROOT_DIR)/tools
+TOOLS_DIR := $(OUTPUT_DIR)/tools
 $(shell mkdir -p $(TOOLS_DIR))
 endif
 
 # TMP_DIR: directory where temporary files are stored.
 ifeq ($(origin TMP_DIR),undefined)
-TMP_DIR := $(ROOT_DIR)/tmp
+TMP_DIR := $(OUTPUT_DIR)/tmp
 $(shell mkdir -p $(TMP_DIR))
 endif
 
 ifeq ($(origin VERSION), undefined)
-VERSION := $(shell git describe --abbrev=0 --dirty --always --tags | sed 's/-/./g')
+# VERSION := $(shell git describe --abbrev=0 --dirty --always --tags | sed 's/-/./g')	#v2.3.3.dirty
+VERSION := $(shell git describe --tags --always --match="v*" --dirty | sed 's/-/./g')	#v2.3.3.631.g00abdc9b.dirty
+# v2.3.3: git tag
 endif
 
 # Check if the tree is dirty. default to dirty(maybe u should commit?)
@@ -70,6 +72,7 @@ endif
 GIT_COMMIT:=$(shell git rev-parse HEAD)
 
 # Minimum test coverage
+# can u use make cover COVERAGE=90
 ifeq ($(origin COVERAGE),undefined)
 COVERAGE := 60
 endif
@@ -86,6 +89,8 @@ PLATFORMS ?= linux_amd64 linux_arm64
 # The OS can be linux/windows/darwin when building binaries
 # PLATFORMS ?= darwin_amd64 windows_amd64 linux_amd64 linux_arm64
 
+# only support linux
+GOOS=linux
 
 # set a specific PLATFORM, defaults to the host platform
 ifeq ($(origin PLATFORM), undefined)
@@ -120,6 +125,7 @@ MAKEFLAGS += --no-print-directory
 endif
 
 # Copy githook scripts when execute makefile
+# TODO! GIT_FILE_SIZE_LIMIT=42000000 git commit -m "This commit is allowed file sizes up to 42MB"
 COPY_GITHOOK:=$(shell cp -f script/githooks/* .git/hooks/; chmod +x .git/hooks/*)
 
 # COMMA: Concatenate multiple strings to form a list of strings
@@ -147,8 +153,8 @@ define MAKEFILE_EXAMPLE
 # make linux.arm64                                               imctl is compiled on arm64 platform.
 # make verify-copyright                                          Verify the license headers for all files.
 # make install-deepcopy-gen                                      Install deepcopy-gen tools if the license is missing.
-# make build BINS=imctl V=1 DEBUG=1                             Build debug binaries for only imctl.
-# make multiarch PLATFORMS="linux_arm64 linux_amd64" V=1   Build binaries for both platforms.
+# make build BINS=imctl V=1 DEBUG=1                              Build debug binaries for only imctl.
+# make multiarch PLATFORMS="linux_arm64 linux_amd64" V=1         Build binaries for both platforms.
 endef
 export MAKEFILE_EXAMPLE
 
